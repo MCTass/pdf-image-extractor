@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Dropzone from './components/Dropzone';
 import ImageCard from './components/ImageCard';
@@ -6,7 +7,8 @@ import { ExtractedImage, ProcessingStatus, ReadmeSettings, ReadmeTone } from './
 import { processPdf } from './services/pdfService';
 import { suggestImageName, generateProjectReadme } from './services/geminiService';
 import { createZip, downloadBlob } from './utils/fileUtils';
-import { Images, FileDown, Loader2, Info, Github, FileText, Copy, Check, Settings2, Trash2, CheckSquare, Square } from 'lucide-react';
+// Added missing Sparkles import
+import { Images, FileDown, Loader2, Info, Github, FileText, Copy, Check, Settings2, Trash2, CheckSquare, Square, ArrowUpCircle, Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<ProcessingStatus>(ProcessingStatus.IDLE);
@@ -20,7 +22,6 @@ const App: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [readmeView, setReadmeView] = useState<'edit' | 'preview'>('preview');
   
-  // Readme Settings
   const [settings, setSettings] = useState<ReadmeSettings>({
       tone: 'professional',
       context: ''
@@ -62,10 +63,7 @@ const App: React.FC = () => {
 
       setImages(initialImages);
       setStatus(ProcessingStatus.ANALYZING);
-
-      // Start AI Analysis Queue
       await processImagesQueue(initialImages);
-      
       setStatus(ProcessingStatus.COMPLETE);
     } catch (e: any) {
       console.error(e);
@@ -75,36 +73,22 @@ const App: React.FC = () => {
   };
 
   const processImagesQueue = async (items: ExtractedImage[]) => {
-    // Reduced concurrency to avoid Rate Limit errors
     const CONCURRENCY = 2;
     const queue = [...items];
     const chunks = [];
-    
-    while (queue.length > 0) {
-        chunks.push(queue.splice(0, CONCURRENCY));
-    }
+    while (queue.length > 0) chunks.push(queue.splice(0, CONCURRENCY));
 
     for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
-        
         await Promise.all(chunk.map(async (img) => {
             setImages(prev => prev.map(p => p.id === img.id ? { ...p, status: 'analyzing' } : p));
             const name = await suggestImageName(img.blob);
-            setImages(prev => prev.map(p => p.id === img.id ? { 
-                ...p, 
-                suggestedName: name,
-                status: 'done' 
-            } : p));
+            setImages(prev => prev.map(p => p.id === img.id ? { ...p, suggestedName: name, status: 'done' } : p));
         }));
-
-        // Add a delay between chunks to respect API rate limits (avoiding 429 errors)
-        if (i < chunks.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-        }
+        if (i < chunks.length - 1) await new Promise(resolve => setTimeout(resolve, 1500));
     }
   };
 
-  // --- Selection Logic ---
   const toggleSelection = (id: string) => {
     const newSet = new Set(selectedIds);
     if (newSet.has(id)) newSet.delete(id);
@@ -113,11 +97,8 @@ const App: React.FC = () => {
   };
 
   const selectAll = () => {
-    if (selectedIds.size === images.length) {
-        setSelectedIds(new Set());
-    } else {
-        setSelectedIds(new Set(images.map(i => i.id)));
-    }
+    if (selectedIds.size === images.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(images.map(i => i.id)));
   };
 
   const bulkDelete = () => {
@@ -129,19 +110,13 @@ const App: React.FC = () => {
   const bulkDownload = async () => {
       const selectedImages = images.filter(img => selectedIds.has(img.id));
       if (selectedImages.length === 0) return;
-      try {
-        const zipBlob = await createZip(selectedImages);
-        downloadBlob(zipBlob, 'selected-images.zip');
-      } catch (e) {
-          console.error(e);
-      }
+      const zipBlob = await createZip(selectedImages);
+      downloadBlob(zipBlob, 'selected-images.zip');
   };
 
-  // --- Image Actions ---
   const handleRegenerateName = async (id: string) => {
     const img = images.find(i => i.id === id);
     if (!img) return;
-
     setImages(prev => prev.map(p => p.id === id ? { ...p, status: 'analyzing' } : p));
     const name = await suggestImageName(img.blob);
     setImages(prev => prev.map(p => p.id === id ? { ...p, suggestedName: name, status: 'done' } : p));
@@ -162,16 +137,10 @@ const App: React.FC = () => {
 
   const handleDownloadAll = async () => {
     if (images.length === 0) return;
-    try {
-      const zipBlob = await createZip(images);
-      downloadBlob(zipBlob, 'extracted-images.zip');
-    } catch (e) {
-      console.error('Failed to create zip', e);
-      alert('Failed to create zip file.');
-    }
+    const zipBlob = await createZip(images);
+    downloadBlob(zipBlob, 'extracted-images.zip');
   };
 
-  // --- Readme Logic ---
   const handleGenerateReadme = async () => {
       if (!pdfText) return;
       setIsGeneratingReadme(true);
@@ -196,60 +165,57 @@ const App: React.FC = () => {
     setReadme('');
     setPdfText('');
     setSelectedIds(new Set());
-    setSettings({ tone: 'professional', context: '' });
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-[#0f172a] selection:bg-indigo-500/30">
+      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-[100]">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-lg">
-              <Images className="text-white" size={24} />
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg shadow-lg shadow-indigo-500/20">
+              <Images className="text-white" size={20} />
             </div>
-            <div>
-              <h1 className="font-bold text-lg text-slate-100 leading-tight">PDF Image Extractor</h1>
-              <p className="text-xs text-slate-400">Powered by Gemini AI</p>
+            <div className="hidden sm:block">
+              <h1 className="font-bold text-base md:text-lg text-slate-100 leading-tight">Extractor</h1>
+              <p className="text-[10px] uppercase tracking-wider text-indigo-400 font-semibold">Gemini Intelligence</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-6">
              {images.length > 0 && (
                 <button 
                   onClick={handleReset}
-                  className="text-sm text-slate-400 hover:text-white transition-colors"
+                  className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
                 >
                   Start Over
                 </button>
              )}
-             <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white">
+             <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-transform hover:scale-110">
                 <Github size={20} />
              </a>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8">
-        
-        {/* Error Message */}
+      <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 md:px-8 py-6 md:py-10">
         {error && (
-            <div className="mb-6 p-4 bg-red-900/30 border border-red-800 rounded-lg flex items-center gap-3 text-red-200">
-                <Info size={20} />
-                <p>{error}</p>
+            <div className="mb-8 p-4 bg-red-900/20 border border-red-800/50 rounded-xl flex items-center gap-3 text-red-200 animate-in fade-in zoom-in-95 duration-300">
+                <Info size={20} className="shrink-0" />
+                <p className="text-sm">{error}</p>
             </div>
         )}
 
-        {/* Empty State / Upload */}
-        {images.length === 0 && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
-             <div className="w-full max-w-2xl mb-8 text-center space-y-4">
-                <h2 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400 pb-2">
-                    Turn PDF Images into Assets
+        {images.length === 0 && (status === ProcessingStatus.IDLE || status === ProcessingStatus.EXTRACTING) && (
+          <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
+             <div className="w-full max-w-3xl mb-10 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-2">
+                   <Sparkles size={14} /> New: Advanced Image Detection
+                </div>
+                <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1]">
+                    Extract <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">PDF Images</span> Instantly.
                 </h2>
-                <p className="text-lg text-slate-400">
-                    Extracts images, auto-detects content, and renames them for your READMEs.
+                <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                    Automatically extract diagrams, screenshots, and photos. AI-generated filenames and README templates ready for production.
                 </p>
              </div>
              
@@ -259,33 +225,34 @@ const App: React.FC = () => {
              />
 
              {status === ProcessingStatus.EXTRACTING && (
-                <div className="mt-8 flex flex-col items-center gap-2 text-indigo-400">
-                    <Loader2 size={32} className="animate-spin" />
-                    <p className="text-sm font-medium">Scanning PDF (Page {progress}%)</p>
+                <div className="mt-10 flex flex-col items-center gap-4">
+                    <div className="relative">
+                        <Loader2 size={48} className="text-indigo-500 animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                            {progress}%
+                        </div>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-300 uppercase tracking-widest">Scanning Document...</p>
                 </div>
              )}
           </div>
         )}
 
-        {/* Processing/Results View */}
         {images.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* Left Column: Images */}
-            <div className="lg:col-span-8 space-y-6">
-                
-                {/* Toolbar */}
-                <div className="bg-slate-800 rounded-lg border border-slate-700 p-3 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-40 shadow-lg">
-                    <div className="flex items-center gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800/60 p-3 md:p-4 flex flex-wrap items-center justify-between gap-4 sticky top-20 z-40 shadow-2xl shadow-black/40 ring-1 ring-white/5">
+                    <div className="flex items-center gap-2 md:gap-4">
                          <button 
                             onClick={selectAll}
-                            className="flex items-center gap-2 text-sm text-slate-300 hover:text-white px-2"
+                            className="flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-all"
                          >
-                             {selectedIds.size === images.length ? <CheckSquare size={18} /> : <Square size={18} />}
-                             Select All
+                             {selectedIds.size === images.length ? <CheckSquare size={18} className="text-indigo-400" /> : <Square size={18} />}
+                             <span className="hidden sm:inline">Select All</span>
                          </button>
-                         <span className="text-slate-500 border-l border-slate-600 pl-4 text-sm">
-                            {selectedIds.size} selected
+                         <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block" />
+                         <span className="text-indigo-400 font-bold text-sm px-2">
+                            {selectedIds.size} <span className="text-slate-500 font-medium">selected</span>
                          </span>
                     </div>
 
@@ -294,13 +261,13 @@ const App: React.FC = () => {
                             <>
                                 <button
                                     onClick={bulkDelete}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-red-900/50 hover:bg-red-900 text-red-200 rounded text-sm transition-colors"
+                                    className="flex items-center gap-2 px-3 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-800/30 rounded-xl text-sm font-bold transition-all"
                                 >
-                                    <Trash2 size={16} /> Delete
+                                    <Trash2 size={16} /> <span className="hidden xs:inline">Delete</span>
                                 </button>
                                 <button
                                     onClick={bulkDownload}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-sm transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
                                 >
                                     <FileDown size={16} /> Download
                                 </button>
@@ -308,172 +275,174 @@ const App: React.FC = () => {
                         ) : (
                             <button
                                 onClick={handleDownloadAll}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium transition-colors"
+                                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
                             >
                                 <FileDown size={18} />
-                                Download All (.zip)
+                                Download Bundle
                             </button>
                         )}
                     </div>
                 </div>
 
-                {/* Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {images.map(img => (
-                    <ImageCard 
-                        key={img.id} 
-                        image={img} 
-                        isSelected={selectedIds.has(img.id)}
-                        onToggleSelect={toggleSelection}
-                        onRename={handleRename}
-                        onRegenerateName={handleRegenerateName}
-                        onDelete={handleDelete}
-                    />
-                ))}
+                <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                    {images.map(img => (
+                        <ImageCard 
+                            key={img.id} 
+                            image={img} 
+                            isSelected={selectedIds.has(img.id)}
+                            onToggleSelect={toggleSelection}
+                            onRename={handleRename}
+                            onRegenerateName={handleRegenerateName}
+                            onDelete={handleDelete}
+                        />
+                    ))}
                 </div>
             </div>
 
-            {/* Right Column: README Generator */}
-            <div className="lg:col-span-4 space-y-4">
-                <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 sticky top-24">
-                    
-                    {/* Header with Settings Toggle */}
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-teal-500/10 rounded-lg">
-                                <FileText className="text-teal-400" size={24} />
-                            </div>
-                            <h2 className="text-xl font-semibold text-white">Project README</h2>
-                        </div>
-                        <button 
-                            onClick={() => setShowSettings(!showSettings)}
-                            className={`p-2 rounded-lg transition-colors ${showSettings ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-700/50'}`}
-                            title="Generation Settings"
-                        >
-                            <Settings2 size={20} />
-                        </button>
-                    </div>
-
-                    {/* Settings Panel */}
-                    {showSettings && (
-                        <div className="mb-6 p-4 bg-slate-900/50 rounded-lg border border-slate-700 space-y-4 animate-in slide-in-from-top-2">
-                             <div>
-                                 <label className="block text-xs font-medium text-slate-400 mb-2">Tone</label>
-                                 <div className="grid grid-cols-2 gap-2">
-                                     {(['professional', 'tutorial', 'marketing', 'minimalist'] as ReadmeTone[]).map(t => (
-                                         <button
-                                            key={t}
-                                            onClick={() => setSettings(s => ({ ...s, tone: t }))}
-                                            className={`
-                                                px-2 py-1.5 text-xs rounded border capitalize transition-colors
-                                                ${settings.tone === t 
-                                                    ? 'bg-indigo-600 border-indigo-500 text-white' 
-                                                    : 'bg-slate-800 border-slate-600 text-slate-300 hover:border-slate-500'}
-                                            `}
-                                         >
-                                             {t}
-                                         </button>
-                                     ))}
-                                 </div>
-                             </div>
-                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-2">Additional Context</label>
-                                <textarea 
-                                    value={settings.context}
-                                    onChange={(e) => setSettings(s => ({ ...s, context: e.target.value }))}
-                                    placeholder="e.g. Focus on the API integration..."
-                                    className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 h-20 resize-none"
-                                />
-                             </div>
-                        </div>
-                    )}
-
-                    {!readme ? (
-                        <div className="space-y-4">
-                            <p className="text-slate-400 text-sm">
-                                Generate a GitHub-ready README based on the PDF text and your named images.
-                            </p>
-                            <button 
-                                onClick={handleGenerateReadme}
-                                disabled={isGeneratingReadme || status === ProcessingStatus.ANALYZING}
-                                className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isGeneratingReadme ? (
-                                    <>
-                                        <Loader2 size={18} className="animate-spin" />
-                                        Writing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <FileText size={18} />
-                                        Generate README
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {/* View Toggle */}
-                            <div className="flex bg-slate-900 p-1 rounded-lg">
-                                <button 
-                                    onClick={() => setReadmeView('preview')}
-                                    className={`flex-1 py-1 text-xs font-medium rounded-md transition-all ${readmeView === 'preview' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-300'}`}
-                                >
-                                    Preview
-                                </button>
-                                <button 
-                                    onClick={() => setReadmeView('edit')}
-                                    className={`flex-1 py-1 text-xs font-medium rounded-md transition-all ${readmeView === 'edit' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-300'}`}
-                                >
-                                    Markdown
-                                </button>
-                            </div>
-                            
-                            <div className="relative group">
-                                {readmeView === 'edit' ? (
-                                    <textarea 
-                                        value={readme}
-                                        onChange={(e) => setReadme(e.target.value)}
-                                        className="w-full h-96 bg-slate-900 text-slate-300 text-sm font-mono p-4 rounded-lg border border-slate-700 focus:outline-none resize-none custom-scrollbar"
-                                    />
-                                ) : (
-                                    <ReadmePreview markdown={readme} images={images} />
-                                )}
-
-                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={handleGenerateReadme}
-                                        className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-md shadow-lg"
-                                        title="Regenerate"
-                                    >
-                                        <Loader2 size={16} className={isGeneratingReadme ? 'animate-spin' : ''} />
-                                    </button>
-                                    <button
-                                        onClick={handleCopyReadme}
-                                        className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-md shadow-lg"
-                                        title="Copy Markdown"
-                                    >
-                                        {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
-                                    </button>
+            <div className="lg:col-span-5 xl:col-span-4 lg:relative">
+                <div className="lg:sticky lg:top-24 space-y-6">
+                    <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-slate-800/80 p-6 md:p-8 shadow-2xl ring-1 ring-white/5 overflow-hidden">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-teal-500/10 rounded-2xl ring-1 ring-teal-500/20">
+                                    <FileText className="text-teal-400" size={24} />
+                                </div>
+                                {/** Header text for the README section */}
+                                <div>
+                                    <h2 className="text-xl font-bold text-white leading-tight">Project README</h2>
+                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-tighter">AI Generation</p>
                                 </div>
                             </div>
-                            
-                            <p className="text-xs text-slate-500 text-center">
-                                Tip: Download images first to ensure 'images/' folder structure matches.
-                            </p>
+                            <button 
+                                onClick={() => setShowSettings(!showSettings)}
+                                className={`p-2.5 rounded-xl transition-all ${showSettings ? 'bg-slate-700 text-white shadow-inner' : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'}`}
+                            >
+                                <Settings2 size={22} />
+                            </button>
                         </div>
-                    )}
+
+                        {showSettings && (
+                            <div className="mb-8 p-5 bg-slate-950/50 rounded-2xl border border-slate-800 space-y-5 animate-in slide-in-from-top-4 duration-300">
+                                 <div>
+                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Writing Style</label>
+                                     <div className="grid grid-cols-2 gap-2">
+                                         {(['professional', 'tutorial', 'marketing', 'minimalist'] as ReadmeTone[]).map(t => (
+                                             <button
+                                                key={t}
+                                                onClick={() => setSettings(s => ({ ...s, tone: t }))}
+                                                className={`
+                                                    px-3 py-2 text-xs font-bold rounded-xl border capitalize transition-all
+                                                    ${settings.tone === t 
+                                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 scale-105 z-10' 
+                                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'}
+                                                `}
+                                             >
+                                                 {t}
+                                             </button>
+                                         ))}
+                                     </div>
+                                 </div>
+                                 <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Project Context</label>
+                                    <textarea 
+                                        value={settings.context}
+                                        onChange={(e) => setSettings(s => ({ ...s, context: e.target.value }))}
+                                        placeholder="Add custom details to include..."
+                                        className="w-full bg-slate-900/80 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 h-24 resize-none transition-all"
+                                    />
+                                 </div>
+                            </div>
+                        )}
+
+                        {!readme ? (
+                            <div className="space-y-6">
+                                <p className="text-slate-400 text-sm leading-relaxed">
+                                    Our AI will scan the extracted text and automatically embed your named images into a professional structure.
+                                </p>
+                                <button 
+                                    onClick={handleGenerateReadme}
+                                    disabled={isGeneratingReadme || status === ProcessingStatus.ANALYZING}
+                                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-indigo-500/10 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-[0.98]"
+                                >
+                                    {isGeneratingReadme ? (
+                                        <>
+                                            <Loader2 size={20} className="animate-spin" />
+                                            Analyzing Document...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={20} />
+                                            Generate Full README
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
+                                    <button 
+                                        onClick={() => setReadmeView('preview')}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${readmeView === 'preview' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-400'}`}
+                                    >
+                                        PREVIEW
+                                    </button>
+                                    <button 
+                                        onClick={() => setReadmeView('edit')}
+                                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${readmeView === 'edit' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-400'}`}
+                                    >
+                                        MARKDOWN
+                                    </button>
+                                </div>
+                                
+                                <div className="relative group rounded-2xl border border-slate-800 overflow-hidden bg-slate-950">
+                                    {readmeView === 'edit' ? (
+                                        <textarea 
+                                            value={readme}
+                                            onChange={(e) => setReadme(e.target.value)}
+                                            className="w-full h-[60vh] lg:h-[70vh] bg-slate-950 text-indigo-300 text-sm font-mono p-5 outline-none resize-none custom-scrollbar selection:bg-indigo-500/40"
+                                        />
+                                    ) : (
+                                        <div className="h-[60vh] lg:h-[70vh]">
+                                          <ReadmePreview markdown={readme} images={images} />
+                                        </div>
+                                    )}
+
+                                    <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-50">
+                                        <button
+                                            onClick={handleCopyReadme}
+                                            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800/90 backdrop-blur hover:bg-slate-700 text-white rounded-xl shadow-2xl border border-slate-700 transition-all active:scale-95"
+                                        >
+                                            {copied ? <Check size={18} className="text-green-400" /> : <Copy size={18} />}
+                                            <span className="text-xs font-bold">{copied ? 'COPIED!' : 'COPY'}</span>
+                                        </button>
+                                        <button
+                                            onClick={handleGenerateReadme}
+                                            className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-2xl transition-all active:scale-95"
+                                            title="Regenerate"
+                                        >
+                                            <Loader2 size={18} className={isGeneratingReadme ? 'animate-spin' : ''} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-
           </div>
         )}
       </main>
 
-       {/* Footer */}
-       <footer className="border-t border-slate-800 py-6 mt-12 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
-            <p>&copy; {new Date().getFullYear()} PDF Extractor. Local processing mostly, AI via Gemini.</p>
+       <footer className="border-t border-slate-800/50 py-10 mt-20 bg-slate-900/20 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+            <div className="flex items-center justify-center gap-6 mb-6">
+                <a href="#" className="text-slate-500 hover:text-slate-300 transition-colors">Documentation</a>
+                <a href="#" className="text-slate-500 hover:text-slate-300 transition-colors">Privacy</a>
+                <a href="#" className="text-slate-500 hover:text-slate-300 transition-colors">Terms</a>
+            </div>
+            <p className="text-slate-600 text-[11px] font-bold uppercase tracking-[0.2em]">
+               &copy; {new Date().getFullYear()} Image Intelligence Engine. Native processing.
+            </p>
         </div>
        </footer>
     </div>

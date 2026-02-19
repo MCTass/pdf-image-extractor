@@ -1,10 +1,9 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { ReadmeSettings } from "../types";
 
-// Initialize Gemini Client
-const apiKey = process.env.API_KEY || '';
-
-const getClient = () => new GoogleGenAI({ apiKey });
+// Always use named parameter with process.env.API_KEY directly as per guidelines
+const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -86,11 +85,17 @@ export const suggestImageName = async (imageBlob: Blob): Promise<string> => {
         return response;
     });
 
+    // Access .text property directly as per guidelines
     const jsonText = result.text;
     if (!jsonText) return `extracted-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    const parsed = JSON.parse(jsonText);
-    return parsed.filename || `extracted-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    try {
+        const parsed = JSON.parse(jsonText);
+        return parsed.filename || `extracted-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    } catch (e) {
+        console.warn("JSON parsing of filename suggestion failed:", e);
+        return `extracted-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
 
   } catch (error) {
     console.error("Gemini analysis failed after retries:", error);
@@ -147,6 +152,7 @@ export const generateProjectReadme = async (
             });
         });
 
+        // Access .text property directly as per guidelines
         return result.text || "# README Generation Failed";
     } catch (error) {
         console.error("Readme generation failed", error);
