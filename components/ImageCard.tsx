@@ -59,7 +59,10 @@ const ImageCard: React.FC<ImageCardProps> = ({
       </div>
 
       {/* Image Preview Area */}
-      <div className="relative aspect-square bg-slate-900/50 flex items-center justify-center p-2 overflow-hidden">
+      <div 
+        className="relative aspect-square bg-slate-900/50 flex items-center justify-center p-2 overflow-hidden"
+        title={image.caption || "No caption available"}
+      >
         {previewUrl ? (
           <img 
             src={previewUrl} 

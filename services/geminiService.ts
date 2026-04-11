@@ -48,7 +48,7 @@ const callWithRetry = async <T>(
     }
 };
 
-export const suggestImageName = async (imageBlob: Blob): Promise<string> => {
+export const suggestImageName = async (imageBlob: Blob): Promise<{filename: string, caption: string}> => {
   try {
     const result = await callWithRetry(async () => {
         const ai = getClient();
@@ -66,7 +66,7 @@ export const suggestImageName = async (imageBlob: Blob): Promise<string> => {
                     }
                 },
                 {
-                    text: "Analyze this image and generate a concise, descriptive filename in kebab-case. Do not include the file extension. Example: 'login-screen-mockup' or 'architecture-diagram'. Return ONLY the filename string."
+                    text: "Analyze this image and generate a concise, descriptive filename in kebab-case. Also generate a short 1-2 sentence caption describing the image."
                 }
                 ]
             },
@@ -78,6 +78,10 @@ export const suggestImageName = async (imageBlob: Blob): Promise<string> => {
                         filename: {
                             type: Type.STRING,
                             description: "The suggested kebab-case filename without extension"
+                        },
+                        caption: {
+                            type: Type.STRING,
+                            description: "A short 1-2 sentence description of the image"
                         }
                     }
                 }
@@ -87,14 +91,17 @@ export const suggestImageName = async (imageBlob: Blob): Promise<string> => {
     });
 
     const jsonText = result.text;
-    if (!jsonText) return `extracted-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    if (!jsonText) return { filename: `extracted-image-${Date.now()}`, caption: "No description available" };
     
     const parsed = JSON.parse(jsonText);
-    return parsed.filename || `extracted-image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    return {
+      filename: parsed.filename || `extracted-image-${Date.now()}`,
+      caption: parsed.caption || "No description available"
+    };
 
   } catch (error) {
     console.error("Gemini analysis failed after retries:", error);
-    return `image-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    return { filename: `image-${Date.now()}`, caption: "Analysis failed" };
   }
 };
 

@@ -5,6 +5,7 @@ export interface ExtractedImage {
   height: number;
   originalName: string;
   suggestedName: string;
+  caption?: string;
   status: 'pending' | 'analyzing' | 'done' | 'error';
   pageIndex: number;
 }
