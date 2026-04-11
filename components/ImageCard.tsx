@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { ExtractedImage } from '../types';
-import { Download, Sparkles, RefreshCw, XCircle, CheckCircle2, Circle } from 'lucide-react';
+// Added missing Loader2 import
+import { Download, Sparkles, RefreshCw, XCircle, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 import { downloadBlob } from '../utils/fileUtils';
 
 interface ImageCardProps {
@@ -35,26 +37,29 @@ const ImageCard: React.FC<ImageCardProps> = ({
   };
 
   const statusColor = {
-    pending: 'bg-slate-600',
-    analyzing: 'bg-indigo-600 animate-pulse',
-    done: 'bg-green-600',
-    error: 'bg-red-600'
+    pending: 'bg-slate-500',
+    analyzing: 'bg-indigo-500 animate-pulse',
+    done: 'bg-emerald-500 shadow-lg shadow-emerald-500/20',
+    error: 'bg-red-500'
   };
 
   return (
     <div 
         className={`
-            relative rounded-lg overflow-hidden border shadow-lg transition-all cursor-pointer group
-            ${isSelected ? 'bg-indigo-900/20 border-indigo-500 ring-1 ring-indigo-500' : 'bg-slate-800 border-slate-700 hover:border-slate-600'}
+            relative rounded-2xl overflow-hidden border transition-all duration-300 group
+            ${isSelected 
+              ? 'bg-indigo-500/5 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xl shadow-indigo-500/10' 
+              : 'bg-slate-900/40 border-slate-800 hover:border-slate-700 shadow-lg hover:shadow-indigo-500/5'
+            }
         `}
         onClick={() => onToggleSelect(image.id)}
     >
       {/* Selection Checkbox */}
-      <div className="absolute top-2 left-2 z-20 text-white">
+      <div className="absolute top-3 left-3 z-30 transition-transform duration-300 group-hover:scale-110">
           {isSelected ? (
-              <CheckCircle2 className="text-indigo-400 fill-indigo-400/20" size={20} />
+              <CheckCircle2 className="text-indigo-400 fill-indigo-400/20" size={24} />
           ) : (
-              <Circle className="text-white/50 hover:text-white" size={20} />
+              <Circle className="text-white/20 group-hover:text-white/40" size={24} />
           )}
       </div>
 
@@ -67,46 +72,48 @@ const ImageCard: React.FC<ImageCardProps> = ({
           <img 
             src={previewUrl} 
             alt="Extracted" 
-            className="max-w-full max-h-full object-contain rounded-sm"
+            className="max-w-full max-h-full object-contain rounded-lg transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full border-2 border-slate-600 border-t-transparent animate-spin" />
+          <Loader2 size={24} className="text-slate-700 animate-spin" />
         )}
         
         {/* Status Badge */}
-        <div className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full ${statusColor[image.status]}`} title={image.status} />
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${statusColor[image.status]}`} />
+        </div>
         
         {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
+        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 backdrop-blur-[2px]">
             <button 
                 onClick={handleDownload}
-                className="p-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-colors"
+                className="p-3 bg-white text-slate-900 hover:bg-indigo-500 hover:text-white rounded-xl shadow-2xl transition-all hover:scale-110 active:scale-95"
                 title="Download"
             >
-                <Download size={18} />
+                <Download size={20} />
             </button>
             <button 
                 onClick={(e) => { e.stopPropagation(); onDelete(image.id); }}
-                className="p-2 bg-red-900/80 hover:bg-red-800 rounded-full text-white transition-colors"
+                className="p-3 bg-red-500/90 text-white hover:bg-red-600 rounded-xl shadow-2xl transition-all hover:scale-110 active:scale-95"
                 title="Remove"
             >
-                <XCircle size={18} />
+                <XCircle size={20} />
             </button>
         </div>
 
         {/* Resolution Badge */}
-        <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/50 text-[10px] text-slate-300 rounded backdrop-blur-sm">
+        <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 text-[10px] font-bold text-slate-300 rounded-lg backdrop-blur-md border border-white/5 uppercase tracking-wider">
            {image.width} × {image.height}
         </div>
-         <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/50 text-[10px] text-slate-300 rounded backdrop-blur-sm">
-           P{image.pageIndex}
+         <div className="absolute bottom-3 right-3 px-2 py-1 bg-indigo-500/80 text-[10px] font-bold text-white rounded-lg backdrop-blur-md border border-white/10 shadow-lg">
+           PAGE {image.pageIndex}
         </div>
       </div>
 
       {/* Details Area */}
-      <div className="p-3" onClick={(e) => e.stopPropagation()}>
-        <label className="block text-xs font-medium text-slate-400 mb-1.5">
-          Filename
+      <div className="p-4 bg-slate-900/20" onClick={(e) => e.stopPropagation()}>
+        <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Suggested Filename
         </label>
         <div className="flex gap-2">
           <input
@@ -116,18 +123,23 @@ const ImageCard: React.FC<ImageCardProps> = ({
             onFocus={() => setIsEditing(true)}
             onBlur={() => setIsEditing(false)}
             className={`
-              w-full bg-slate-900 border rounded px-2 py-1.5 text-sm text-slate-200 outline-none transition-colors
-              ${isEditing ? 'border-indigo-500' : 'border-slate-700 hover:border-slate-600'}
+              w-full bg-slate-950/80 border rounded-xl px-3 py-2 text-sm text-slate-200 outline-none transition-all
+              ${isEditing ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-800 hover:border-slate-700'}
             `}
             placeholder="filename"
           />
           <button 
             onClick={() => onRegenerateName(image.id)}
             disabled={image.status === 'analyzing'}
-            className="shrink-0 p-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-indigo-300 rounded border border-slate-600 transition-colors"
-            title="Regenerate Name with AI"
+            className={`
+              shrink-0 p-2.5 rounded-xl border transition-all
+              ${image.status === 'analyzing' 
+                ? 'bg-slate-800 border-slate-800 text-slate-500' 
+                : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500 hover:text-white shadow-lg shadow-indigo-500/5'}
+            `}
+            title="AI Regenerate"
           >
-            {image.status === 'analyzing' ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            {image.status === 'analyzing' ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
           </button>
         </div>
       </div>

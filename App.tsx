@@ -115,8 +115,6 @@ const App: React.FC = () => {
 
       setImages(initialImages);
       setStatus(ProcessingStatus.ANALYZING);
-
-      // Start AI Analysis Queue
       await processImagesQueue(initialImages);
 
       setStatus(ProcessingStatus.COMPLETE);
@@ -181,7 +179,6 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Selection Logic ---
   const toggleSelection = (id: string) => {
     const newSet = new Set(selectedIds);
     if (newSet.has(id)) newSet.delete(id);
@@ -214,7 +211,6 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Image Actions ---
   const handleRegenerateName = async (id: string) => {
     const img = images.find((i) => i.id === id);
     if (!img) return;
@@ -263,7 +259,6 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Readme Logic ---
   const handleGenerateReadme = async () => {
     if (!pdfText) return;
     setIsGeneratingReadme(true);
@@ -371,8 +366,8 @@ const App: React.FC = () => {
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-lg">
-              <Images className="text-white" size={24} />
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg shadow-lg shadow-indigo-500/20">
+              <Images className="text-white" size={20} />
             </div>
             <div>
               <h1 className="font-bold text-lg text-slate-100 leading-tight">
@@ -495,7 +490,6 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Processing/Results View */}
         {images.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column: Images */}
