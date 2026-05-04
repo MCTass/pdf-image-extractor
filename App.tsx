@@ -190,7 +190,11 @@ const App: React.FC = () => {
     if (selectedIds.size === images.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(images.map((i) => i.id)));
+      const newSelectedIds = new Set<string>();
+      for (const img of images) {
+        newSelectedIds.add(img.id);
+      }
+      setSelectedIds(newSelectedIds);
     }
   };
 
