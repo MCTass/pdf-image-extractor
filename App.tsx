@@ -442,7 +442,7 @@ const App: React.FC = () => {
             <a
               href="https://github.com"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="text-slate-400 hover:text-white"
             >
               <Github size={20} />
