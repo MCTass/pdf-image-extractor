@@ -15,6 +15,7 @@ import {
 } from "./services/geminiService";
 import { florenceService, ModelProgress, OfflineModelType } from "./services/florenceService";
 import { qwenService, QwenProgress } from "./services/qwenService";
+import { gemmaService, GemmaProgress } from "./services/gemmaService";
 import { createZip, downloadBlob } from "./utils/fileUtils";
 import {
   Images,
@@ -56,6 +57,7 @@ const App: React.FC = () => {
     florenceService.getCurrentModelType()
   );
   const [qwenStatus, setQwenStatus] = useState<QwenProgress>(qwenService.getStatus());
+  const [gemmaStatus, setGemmaStatus] = useState<GemmaProgress>(gemmaService.getStatus());
 
   // Readme Settings
   const [settings, setSettings] = useState<ReadmeSettings>({
@@ -64,7 +66,7 @@ const App: React.FC = () => {
   });
   const [showSettings, setShowSettings] = useState(false);
 
-  // Subscribe to Florence model status
+  // Subscribe to model statuses
   useEffect(() => {
     const unsubscribe = florenceService.onStatusChange((progress) => {
       setModelProgress(progress);
@@ -72,7 +74,10 @@ const App: React.FC = () => {
     const unsubscribeQwen = qwenService.onStatusChange((s) => {
       setQwenStatus(s);
     });
-    return () => { unsubscribe(); unsubscribeQwen(); };
+    const unsubscribeGemma = gemmaService.onStatusChange((s) => {
+      setGemmaStatus(s);
+    });
+    return () => { unsubscribe(); unsubscribeQwen(); unsubscribeGemma(); };
   }, []);
 
   const handleFileAccepted = async (file: File) => {
@@ -149,7 +154,11 @@ const App: React.FC = () => {
           let result: {filename: string, caption: string};
           if (offlineMode) {
             // Use local AI for offline analysis
-            result = await florenceService.suggestImageName(img.blob);
+            if (offlineModel === "gemma-4-e2b") {
+               result = await gemmaService.suggestImageName(img.blob);
+            } else {
+               result = await florenceService.suggestImageName(img.blob);
+            }
           } else {
             // Use Gemini for online analysis
             result = await suggestImageName(img.blob);
@@ -225,7 +234,11 @@ const App: React.FC = () => {
 
     let result: {filename: string, caption: string};
     if (offlineMode) {
-      result = await florenceService.suggestImageName(img.blob);
+      if (offlineModel === "gemma-4-e2b") {
+        result = await gemmaService.suggestImageName(img.blob);
+      } else {
+        result = await florenceService.suggestImageName(img.blob);
+      }
     } else {
       result = await suggestImageName(img.blob);
     }
@@ -271,22 +284,41 @@ const App: React.FC = () => {
     try {
       let markdown: string;
       if (offlineMode) {
-        // Use Qwen3.5-0.8B offline
-        if (!qwenService.isReady()) {
-          setReadme("# Initializing Qwen3.5-0.8B...\n\nPlease wait, the offline model is loading.");
-          await qwenService.initialize();
+        if (offlineModel === "gemma-4-e2b") {
+           // Use Gemma 4 E2B offline
+           if (!gemmaService.isReady()) {
+             setReadme("# Initializing Gemma-4-E2B...\n\nPlease wait, the offline model is loading.");
+             await gemmaService.initialize();
+           }
+           let streamed = "";
+           markdown = await gemmaService.generateReadme(
+             pdfText,
+             currentNames,
+             settings.tone,
+             settings.context,
+             (token) => {
+               streamed += token;
+               setReadme(streamed);
+             }
+           );
+        } else {
+           // Use Qwen3.5-0.8B offline
+           if (!qwenService.isReady()) {
+             setReadme("# Initializing Qwen3.5-0.8B...\n\nPlease wait, the offline model is loading.");
+             await qwenService.initialize();
+           }
+           let streamed = "";
+           markdown = await qwenService.generateReadme(
+             pdfText,
+             currentNames,
+             settings.tone,
+             settings.context,
+             (token) => {
+               streamed += token;
+               setReadme(streamed);
+             }
+           );
         }
-        let streamed = "";
-        markdown = await qwenService.generateReadme(
-          pdfText,
-          currentNames,
-          settings.tone,
-          settings.context,
-          (token) => {
-            streamed += token;
-            setReadme(streamed);
-          }
-        );
       } else {
         markdown = await generateProjectReadme(pdfText, currentNames, settings);
       }
@@ -321,7 +353,7 @@ const App: React.FC = () => {
       {/* Model Loading/Error Banner Area */}
       <div className="flex flex-col">
         {/* Loading States */}
-        {(modelProgress.status === "loading" || qwenStatus.status === "loading") && (
+        {(modelProgress.status === "loading" || qwenStatus.status === "loading" || gemmaStatus.status === "loading") && (
           <div className="bg-blue-900/30 border-b border-blue-800 px-4 py-3 space-y-2">
             {modelProgress.status === "loading" && (
               <div className="max-w-7xl mx-auto flex items-center gap-3 text-blue-200">
@@ -334,7 +366,7 @@ const App: React.FC = () => {
                 </span>
               </div>
             )}
-            {qwenStatus.status === "loading" && (
+            {qwenStatus.status === "loading" && offlineModel !== "gemma-4-e2b" && (
               <div className="max-w-7xl mx-auto flex items-center gap-3 text-indigo-200 border-t border-blue-800/30 pt-2">
                 <Loader2 size={16} className="animate-spin shrink-0 text-indigo-400" />
                 <p className="text-sm font-medium">
@@ -345,17 +377,30 @@ const App: React.FC = () => {
                 </span>
               </div>
             )}
+            {gemmaStatus.status === "loading" && (
+              <div className="max-w-7xl mx-auto flex items-center gap-3 text-emerald-200 border-t border-blue-800/30 pt-2">
+                <Loader2 size={16} className="animate-spin shrink-0 text-emerald-400" />
+                <p className="text-sm font-medium">
+                  {gemmaStatus.message || "Loading Gemma model..."}
+                </p>
+                <span className="text-xs text-emerald-300 ml-auto font-mono">
+                  {gemmaStatus.progress ? `${gemmaStatus.progress}%` : "Initialising..."}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Error States */}
-        {(modelProgress.status === "error" || qwenStatus.status === "error") && (
+        {(modelProgress.status === "error" || qwenStatus.status === "error" || gemmaStatus.status === "error") && (
           <div className="bg-amber-900/30 border-b border-amber-800 px-4 py-3">
             <div className="max-w-7xl mx-auto flex items-center gap-3 text-amber-200">
               <Info size={18} className="shrink-0" />
               <div className="flex flex-col">
                 <p className="text-sm font-medium">
-                  {modelProgress.status === "error" ? `Vision Error: ${modelProgress.message}` : `README Error: ${qwenStatus.message}`}
+                  {modelProgress.status === "error" ? `Vision Error: ${modelProgress.message}` :
+                   gemmaStatus.status === "error" ? `Gemma Error: ${gemmaStatus.message}` :
+                   `README Error: ${qwenStatus.message}`}
                 </p>
                 <p className="text-xs text-amber-300">
                   Online mode (Gemini AI) is still available.
@@ -394,19 +439,22 @@ const App: React.FC = () => {
                 onChange={(e) => {
                   const model = e.target.value as OfflineModelType;
                   setOfflineModel(model);
-                  florenceService.setModel(model);
+                  if (model !== "gemma-4-e2b") {
+                    florenceService.setModel(model);
+                  }
                 }}
                 className="bg-slate-800 text-slate-200 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-medium focus:ring-1 focus:ring-indigo-500 outline-none"
               >
                 <option value="florence-2">Florence-2 (Fast)</option>
                 <option value="smolvlm">SmolVLM 256M (Instruct)</option>
                 <option value="smolvlm-500">SmolVLM 500M (Instruct)</option>
+                <option value="gemma-4-e2b">Gemma 4 E2B</option>
               </select>
             )}
 
             <button
               onClick={() => setOfflineMode(!offlineMode)}
-              disabled={modelProgress.status !== "ready" && !offlineMode}
+              disabled={(modelProgress.status !== "ready" && gemmaStatus.status !== "ready" && !offlineMode)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 offlineMode
                   ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/50"
@@ -418,7 +466,7 @@ const App: React.FC = () => {
                   : "Switch to offline mode (Local WebGPU)"
               }
             >
-              {modelProgress.status === "loading" ? (
+              {modelProgress.status === "loading" || gemmaStatus.status === "loading" ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : offlineMode ? (
                 <WifiOff size={16} />
@@ -426,7 +474,7 @@ const App: React.FC = () => {
                 <Wifi size={16} />
               )}
               <span className="hidden sm:inline">
-                {modelProgress.status === "loading"
+                {modelProgress.status === "loading" || gemmaStatus.status === "loading"
                   ? "Loading..."
                   : offlineMode
                     ? "Offline"
@@ -654,14 +702,20 @@ const App: React.FC = () => {
                       your named images.
                       {offlineMode && (
                         <span className="block mt-1 text-indigo-400 text-xs">
-                          🧠 Offline mode: uses Qwen3.5-0.8B locally
+                          🧠 Offline mode: uses {offlineModel === "gemma-4-e2b" ? "Gemma-4-E2B" : "Qwen3.5-0.8B"} locally
                         </span>
                       )}
                     </p>
-                    {offlineMode && qwenStatus.status === "loading" && (
+                    {offlineMode && qwenStatus.status === "loading" && offlineModel !== "gemma-4-e2b" && (
                       <div className="flex items-center gap-2 text-xs text-blue-300 bg-blue-900/20 border border-blue-800 rounded-lg px-3 py-2">
                         <Loader2 size={14} className="animate-spin shrink-0" />
                         <span>{qwenStatus.message || "Loading Qwen..."} {qwenStatus.progress ? `${qwenStatus.progress}%` : ""}</span>
+                      </div>
+                    )}
+                    {offlineMode && gemmaStatus.status === "loading" && offlineModel === "gemma-4-e2b" && (
+                      <div className="flex items-center gap-2 text-xs text-emerald-300 bg-emerald-900/20 border border-emerald-800 rounded-lg px-3 py-2">
+                        <Loader2 size={14} className="animate-spin shrink-0" />
+                        <span>{gemmaStatus.message || "Loading Gemma..."} {gemmaStatus.progress ? `${gemmaStatus.progress}%` : ""}</span>
                       </div>
                     )}
                     <button
@@ -669,7 +723,8 @@ const App: React.FC = () => {
                       disabled={
                         isGeneratingReadme ||
                         status === ProcessingStatus.ANALYZING ||
-                        (offlineMode && qwenStatus.status === "loading")
+                        (offlineMode && offlineModel !== "gemma-4-e2b" && qwenStatus.status === "loading") ||
+                        (offlineMode && offlineModel === "gemma-4-e2b" && gemmaStatus.status === "loading")
                       }
                       className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >

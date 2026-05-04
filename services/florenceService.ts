@@ -10,7 +10,7 @@ import {
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-export type OfflineModelType = "florence-2" | "smolvlm" | "smolvlm-500";
+export type OfflineModelType = "florence-2" | "smolvlm" | "smolvlm-500" | "gemma-4-e2b";
 
 export type ModelProgress = {
   status: "loading" | "ready" | "error";
