@@ -93,11 +93,19 @@ export const suggestImageName = async (imageBlob: Blob): Promise<{filename: stri
     const jsonText = result.text;
     if (!jsonText) return { filename: `extracted-image-${Date.now()}`, caption: "No description available" };
     
-    const parsed = JSON.parse(jsonText);
-    return {
-      filename: parsed.filename || `extracted-image-${Date.now()}`,
-      caption: parsed.caption || "No description available"
-    };
+    try {
+      const parsed = JSON.parse(jsonText);
+      return {
+        filename: parsed.filename || `extracted-image-${Date.now()}`,
+        caption: parsed.caption || "No description available"
+      };
+    } catch (parseError) {
+      console.warn("Failed to parse Gemini response as JSON:", parseError);
+      return {
+        filename: `extracted-image-${Date.now()}`,
+        caption: "Response format invalid"
+      };
+    }
 
   } catch (error) {
     console.error("Gemini analysis failed after retries:", error);
