@@ -93,10 +93,20 @@ export const suggestImageName = async (imageBlob: Blob): Promise<{filename: stri
     const jsonText = result.text;
     if (!jsonText) return { filename: `extracted-image-${Date.now()}`, caption: "No description available" };
     
-    const parsed = JSON.parse(jsonText);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch (e) {
+      // Fallback securely without exposing stack trace for malformed LLM outputs
+      return {
+        filename: `extracted-image-${Date.now()}`,
+        caption: "No description available"
+      };
+    }
+
     return {
-      filename: parsed.filename || `extracted-image-${Date.now()}`,
-      caption: parsed.caption || "No description available"
+      filename: parsed?.filename || `extracted-image-${Date.now()}`,
+      caption: parsed?.caption || "No description available"
     };
 
   } catch (error) {
