@@ -1,9 +1,14 @@
 import JSZip from 'jszip';
 import { ExtractedImage } from '../types';
 
-export const createZip = async (images: ExtractedImage[]): Promise<Blob> => {
+export const createZip = async (images: ExtractedImage[], readmeMarkdown?: string): Promise<Blob> => {
   const zip = new JSZip();
   
+  // Include README.md at root if provided
+  if (readmeMarkdown) {
+    zip.file("README.md", readmeMarkdown);
+  }
+
   // Create images folder
   const imgFolder = zip.folder("images");
   

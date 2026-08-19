@@ -25,6 +25,13 @@ export interface AppState {
   progress: number;
 }
 
+export type AiProvider = 'openrouter' | 'browser' | 'ollama';
+
+export interface OpenRouterConfig {
+  apiKey: string;
+  model: string;
+}
+
 export type ReadmeTone = 'professional' | 'tutorial' | 'marketing' | 'minimalist';
 
 export interface ReadmeSettings {

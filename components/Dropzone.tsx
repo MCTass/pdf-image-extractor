@@ -61,28 +61,41 @@ const Dropzone: React.FC<DropzoneProps> = ({ onFileAccepted, isProcessing }) => 
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
       />
       
-      <div className="flex flex-col items-center gap-6 text-center px-8 z-0">
+      <div className="flex flex-col items-center gap-5 text-center px-8 z-0">
         <div className={`
-          p-6 rounded-[2rem] transition-all duration-500 shadow-2xl
-          ${isDragOver ? 'bg-indigo-500 text-white scale-110 rotate-12' : 'bg-slate-800 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 group-hover:scale-105 group-hover:-rotate-3'}
+          p-5 rounded-2xl transition-all duration-500 shadow-2xl border
+          ${isDragOver 
+            ? 'bg-indigo-600 text-white scale-110 rotate-3 border-indigo-400 shadow-indigo-500/30' 
+            : 'bg-slate-900/90 text-slate-400 border-slate-800/80 group-hover:text-indigo-400 group-hover:border-indigo-500/40 group-hover:bg-slate-800/90 group-hover:scale-105 group-hover:-rotate-1 shadow-black/40'}
         `}>
-          {isDragOver ? <FileUp size={40} /> : <Upload size={40} />}
+          {isDragOver ? <FileUp size={36} className="animate-bounce" /> : <Upload size={36} />}
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-2xl font-black text-white tracking-tight">
-            {isProcessing ? 'Analyzing Core Data...' : 'Drop PDF Here'}
+          <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+            {isProcessing ? 'Extracting Text & Figures...' : 'Drop your PDF document here'}
           </h3>
-          <p className="text-sm font-medium text-slate-500 max-w-sm mx-auto leading-relaxed">
-            Ready to extract diagrams and images. <br className="hidden sm:block" />
-            <span className="text-indigo-400/80">Click or drag to begin.</span>
+          <p className="text-sm font-normal text-slate-400 max-w-md mx-auto leading-relaxed">
+            Drag and drop your paper, report, or spec, or <span className="text-indigo-400 font-medium underline underline-offset-4 decoration-indigo-500/40 group-hover:decoration-indigo-400">browse files</span>
           </p>
+        </div>
+
+        {/* Feature Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <span className="px-2.5 py-1 text-[11px] font-medium bg-slate-800/60 text-slate-400 border border-slate-700/50 rounded-full">
+            📄 Full PDF Parsing
+          </span>
+          <span className="px-2.5 py-1 text-[11px] font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full">
+            ✨ Vision AI Asset Naming
+          </span>
+          <span className="px-2.5 py-1 text-[11px] font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-full">
+            📝 AI README Synthesis
+          </span>
         </div>
       </div>
 
-      {/* Background Decorative Element */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-[100px] -mr-16 -mt-16 rounded-full" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/5 blur-[100px] -ml-16 -mb-16 rounded-full" />
+      {/* Ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/10 blur-[90px] pointer-events-none rounded-full" />
     </div>
   );
 };

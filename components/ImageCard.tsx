@@ -142,6 +142,11 @@ const ImageCard: React.FC<ImageCardProps> = ({
             {image.status === 'analyzing' ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
           </button>
         </div>
+        {image.caption && (
+          <p className="mt-2 text-[11px] text-slate-400 line-clamp-2 leading-relaxed bg-slate-950/40 p-1.5 rounded-lg border border-slate-800/60">
+            {image.caption}
+          </p>
+        )}
       </div>
     </div>
   );

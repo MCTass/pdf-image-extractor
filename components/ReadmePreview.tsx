@@ -60,14 +60,22 @@ const ReadmePreview: React.FC<ReadmePreviewProps> = ({ markdown, images }) => {
               }
               return <img src={src} alt={alt} className="rounded-xl border border-slate-800" {...props} />;
             },
-            h1: ({children}) => <h1 className="text-3xl font-black mb-8 border-b border-slate-800 pb-4 text-white tracking-tight">{children}</h1>,
-            h2: ({children}) => <h2 className="text-xl font-bold mt-10 mb-4 text-indigo-100 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+            h1: ({children}) => <h1 className="text-2xl md:text-3xl font-black mb-6 border-b border-slate-800 pb-3 text-white tracking-tight">{children}</h1>,
+            h2: ({children}) => <h2 className="text-lg md:text-xl font-bold mt-8 mb-3 text-slate-100 flex items-center gap-2 border-b border-slate-800/60 pb-2">
+              <span className="w-1.5 h-4 rounded-full bg-indigo-500" />
               {children}
             </h2>,
-            p: ({children}) => <p className="leading-relaxed text-slate-400 mb-4">{children}</p>,
-            code: ({children}) => <code className="bg-slate-900 text-indigo-300 px-1.5 py-0.5 rounded font-mono text-xs">{children}</code>,
-            pre: ({children}) => <pre className="bg-slate-950 border border-slate-800 p-4 rounded-xl overflow-x-auto my-6">{children}</pre>
+            h3: ({children}) => <h3 className="text-base font-semibold mt-6 mb-2 text-indigo-200">{children}</h3>,
+            p: ({children}) => <p className="leading-relaxed text-slate-300 mb-4 text-sm md:text-base">{children}</p>,
+            ul: ({children}) => <ul className="list-disc list-inside space-y-1.5 mb-4 text-slate-300 text-sm md:text-base">{children}</ul>,
+            ol: ({children}) => <ol className="list-decimal list-inside space-y-1.5 mb-4 text-slate-300 text-sm md:text-base">{children}</ol>,
+            li: ({children}) => <li className="text-slate-300">{children}</li>,
+            blockquote: ({children}) => <blockquote className="border-l-4 border-indigo-500/70 bg-indigo-500/5 px-4 py-2 my-4 rounded-r-lg text-slate-300 italic text-sm">{children}</blockquote>,
+            table: ({children}) => <div className="overflow-x-auto my-6 rounded-xl border border-slate-800"><table className="w-full text-left text-sm text-slate-300 divide-y divide-slate-800">{children}</table></div>,
+            th: ({children}) => <th className="bg-slate-900 px-4 py-2.5 font-semibold text-slate-100 text-xs uppercase tracking-wider">{children}</th>,
+            td: ({children}) => <td className="px-4 py-2.5 border-t border-slate-800/60 bg-slate-950/40 text-sm">{children}</td>,
+            code: ({children}) => <code className="bg-slate-900 border border-slate-800 text-indigo-300 px-1.5 py-0.5 rounded font-mono text-xs">{children}</code>,
+            pre: ({children}) => <pre className="bg-slate-950 border border-slate-800/80 p-4 rounded-xl overflow-x-auto my-6 font-mono text-xs text-slate-200 shadow-inner">{children}</pre>
           }}
         >
           {markdown}

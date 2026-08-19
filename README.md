@@ -18,13 +18,14 @@ Turn PDF documents, technical papers, and project specs into production-ready Gi
 - 🎨 **Custom Tone & Context**: Tailor README generation with custom prompts, extra context, and tones (Professional, Tutorial, Marketing, Minimalist)
 - 👁️ **Live Markdown Preview**: Real-time side-by-side markdown renderer with instant copy and download options
 - 🔍 **Dual-Engine PDF Extraction**: Uses PDF.js and PDF-lib for extraction of text and high-res images/diagrams
-- 🤖 **Vision AI Image Naming**: Auto-generates descriptive, semantic filenames using local foundation models (Florence-2 / SmolVLM)
-- 🔒 **Local & Privacy-First**: In-browser and local processing (WebGPU accelerated) — your documents never leave your computer
-- 📦 **Batch Operations & ZIP Export**: Select, manage, and download all extracted figures organized in an `images/` directory ready for GitHub
+- 🌐 **OpenRouter Free Mode**: Zero-cost cloud vision & documentation synthesis using free multimodal models (e.g. `Gemma 4 31B`, `Nemotron Nano 12B VL`, `openrouter/free`)
+- 🔒 **Browser Offline Mode**: 100% private, local in-browser vision analysis and generation (Florence-2 / SmolVLM / Gemma via WebGPU)
+- 🖥️ **Ollama Local Server Mode**: Direct integration with your local Ollama server
+- 📦 **Batch Operations & ZIP Export**: Select, manage, and download all extracted figures organized in an `images/` directory along with `README.md` in one bundle
 
 ## 🛠️ Run Locally
 
-**Prerequisites:** Node.js
+**Prerequisites:** Node.js (v18+)
 
 1. Install dependencies:
 
@@ -40,15 +41,18 @@ Turn PDF documents, technical papers, and project specs into production-ready Gi
 
 3. Open your browser at `http://localhost:5173`.
 
-> **Note:** Offline AI models load directly in the browser via WebGPU/ONNX or connect seamlessly to your local Ollama instance. No external subscriptions or API keys required.
+### Supported AI Providers:
+- **OpenRouter (Free Cloud AI)**: Enter your free OpenRouter API key to access 262k-token vision & synthesis models at $0 cost.
+- **Browser (100% Offline)**: Runs models directly in your browser using WebGPU and ONNX without internet or API keys.
+- **Ollama (Local Server)**: Connects to your local `http://localhost:11434` instance.
 
 ---
 
 ## 💡 How It Works
 
 1. **Upload & Parse**: Drop any PDF file. The dual extraction engine parses document text while recovering embedded vector and raster graphics.
-2. **Vision Analysis**: The local vision model (Florence-2 / SmolVLM ONNX) analyzes diagrams and names them descriptively (e.g. `system-architecture-diagram.png`).
-3. **README Synthesis**: Local AI (Qwen / Ollama) generates structured documentation following best open-source practices with properly linked images (`![figure](images/...)`).
+2. **Vision Analysis**: Multimodal AI (Gemma 4 Free / Florence-2) analyzes all diagrams simultaneously and names them descriptively (e.g. `system-architecture-overview.png`).
+3. **README Synthesis**: AI generates structured documentation following best open-source practices with properly embedded image links (`![figure](images/...)`).
 
 ---
 
@@ -56,6 +60,7 @@ Turn PDF documents, technical papers, and project specs into production-ready Gi
 
 - **Frontend**: React + TypeScript + Vite
 - **PDF Processing**: PDF.js, PDF-lib
+- **Cloud Free AI**: OpenRouter API (`google/gemma-4-31b-it:free`, `nvidia/nemotron-nano-12b-v2-vl:free`)
 - **Local Vision AI**: Florence-2 / SmolVLM via `@huggingface/transformers` (Transformers.js v4 + WebGPU)
 - **Local Text LLM & Server**: Qwen (in-browser) / Ollama integration
 - **Styling**: Tailwind CSS
