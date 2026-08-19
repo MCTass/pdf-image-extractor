@@ -1,5 +1,5 @@
 {
-  "name": "PDF Image Extractor & Namer",
-  "description": "Extract images from PDFs and automatically generate descriptive filenames using AI.",
+  "name": "PDF to README Generator",
+  "description": "Generate comprehensive GitHub READMEs and extract images from PDF documents using AI.",
   "requestFramePermissions": []
 }

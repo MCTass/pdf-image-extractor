@@ -1,19 +1,28 @@
 
 
-# PDF Image Extractor & Namer
+# PDF to README Generator (AI-Powered)
 
-Extract images from PDFs and auto-generate descriptive filenames using vision AI (Florence-2 ONNX).
+Turn PDF documents, technical papers, and project specs into production-ready GitHub READMEs and markdown documentation using AI — complete with automatically extracted images, diagrams, and smart filenames.
 
-## Features
+## 🚀 Overview
 
-- 🔍 **Dual-Engine PDF Extraction**: Uses PDF.js and PDF-lib for comprehensive image extraction
-- 🤖 **AI-Powered Naming**: Auto-generates descriptive, kebab-case filenames for extracted images
-- 🔒 **Local & Privacy-First**: In-browser analysis using the **Florence-2** vision foundation model (accelerated by WebGPU)
-- 📦 **Batch Operations**: Select, delete, and download multiple images at once
-- 📝 **README Generator**: Auto-generate project READMEs based on PDF content and images
-- 💾 **ZIP Export**: Download all or selected images as a ZIP file
+**PDF to README Generator** is designed specifically to convert PDF content into structured, well-formatted markdown READMEs with embedded visual assets:
+1. 📄 **Document & Image Extraction**: Automatically extracts text, diagrams, screenshots, and figures from any PDF.
+2. 🤖 **AI-Powered Image Naming**: Generates clean, semantic kebab-case filenames for all extracted assets using local vision AI.
+3. 📝 **Intelligent README Synthesis**: Generates a complete project `README.md` tailored to your chosen tone and context, automatically embedding figures into the right sections.
+4. 💾 **One-Click Export**: Live-preview your markdown, edit on the fly, and download assets packaged in a clean ZIP bundle.
 
-## Run Locally
+## ✨ Features
+
+- 📝 **AI README Generation**: Transforms raw PDF text and extracted figures into a polished, comprehensive `README.md`
+- 🎨 **Custom Tone & Context**: Tailor README generation with custom prompts, extra context, and tones (Professional, Tutorial, Marketing, Minimalist)
+- 👁️ **Live Markdown Preview**: Real-time side-by-side markdown renderer with instant copy and download options
+- 🔍 **Dual-Engine PDF Extraction**: Uses PDF.js and PDF-lib for extraction of text and high-res images/diagrams
+- 🤖 **Vision AI Image Naming**: Auto-generates descriptive, semantic filenames using local foundation models (Florence-2 / SmolVLM)
+- 🔒 **Local & Privacy-First**: In-browser and local processing (WebGPU accelerated) — your documents never leave your computer
+- 📦 **Batch Operations & ZIP Export**: Select, manage, and download all extracted figures organized in an `images/` directory ready for GitHub
+
+## 🛠️ Run Locally
 
 **Prerequisites:** Node.js
 
@@ -23,67 +32,61 @@ Extract images from PDFs and auto-generate descriptive filenames using vision AI
    npm install
    ```
 
-2. Run the app:
+2. Run the application:
 
    ```bash
    npm run dev
    ```
 
-> **Note:** The offline AI models load directly in the browser. First load may take a moment as the model downloads and initializes (~230MB cached in browser).
+3. Open your browser at `http://localhost:5173`.
+
+> **Note:** Offline AI models load directly in the browser via WebGPU/ONNX or connect seamlessly to your local Ollama instance. No external subscriptions or API keys required.
 
 ---
 
-## How It Works
+## 💡 How It Works
 
-The application runs vision foundation models locally in your browser using:
+1. **Upload & Parse**: Drop any PDF file. The dual extraction engine parses document text while recovering embedded vector and raster graphics.
+2. **Vision Analysis**: The local vision model (Florence-2 / SmolVLM ONNX) analyzes diagrams and names them descriptively (e.g. `system-architecture-diagram.png`).
+3. **README Synthesis**: Local AI (Qwen / Ollama) generates structured documentation following best open-source practices with properly linked images (`![figure](images/...)`).
 
-- **Transformers.js (v4)** for running ML models directly in the browser
-- **WebGPU Acceleration** for near-instant inference on supported devices
-- **Quantized ONNX models** for efficient loading and execution
-- **Browser caching** for faster subsequent loads after first download
+---
 
-### Key Benefits:
-
-- ✅ **100% Privacy**: Images never leave your computer
-- ✅ **No API Keys**: Works without any subscriptions or external API keys
-- ✅ **Unlimited Use**: No rate limits or quotas
-- ✅ **Works Offline**: After initial model load, works without internet connection
-
-## Tech Stack
+## 💻 Tech Stack
 
 - **Frontend**: React + TypeScript + Vite
 - **PDF Processing**: PDF.js, PDF-lib
-- **Local Vision AI**: Florence-2 / SmolVLM via `@huggingface/transformers` (Transformers.js v4)
-- **Local Text LLM / Ollama**: Qwen / Ollama integration
+- **Local Vision AI**: Florence-2 / SmolVLM via `@huggingface/transformers` (Transformers.js v4 + WebGPU)
+- **Local Text LLM & Server**: Qwen (in-browser) / Ollama integration
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
-- **Utilities**: JSZip (ZIP creation), React Markdown (README preview)
+- **Utilities**: JSZip (ZIP packaging), React Markdown (live preview)
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 ├── services/
-│   ├── florenceService.ts    # Offline vision AI integration
-│   ├── qwenService.ts        # Local README generation
+│   ├── florenceService.ts    # In-browser vision AI naming (Florence-2 / SmolVLM)
+│   ├── qwenService.ts        # In-browser README generation (Qwen ONNX)
 │   ├── ollamaService.ts      # Local Ollama integration
-│   └── pdfService.ts         # PDF extraction engine
+│   └── pdfService.ts         # Dual-engine PDF extraction
 ├── components/
-│   ├── Dropzone.tsx          # File upload component
-│   ├── ImageCard.tsx         # Individual image display
-│   └── ReadmePreview.tsx     # README markdown preview
+│   ├── Dropzone.tsx          # PDF upload zone
+│   ├── ImageCard.tsx         # Extracted image card & filename editor
+│   └── ReadmePreview.tsx     # Live README markdown preview & editor
 ├── utils/
-│   └── fileUtils.ts          # ZIP and download utilities
-├── types.ts                  # TypeScript type definitions
-└── App.tsx                   # Main application component
+│   └── fileUtils.ts          # ZIP packaging and download utilities
+├── types.ts                  # TypeScript definitions
+└── App.tsx                   # Main application layout & state
 ```
 
-## License
+## 📄 License
 
 This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](LICENSE) license.
 
 **Non-Commercial Use Only**: This means you are free to share and adapt the material, but you may not use the material for commercial purposes. Any adaptations must be shared under the same license.
 
-## Acknowledgments
+## 🤝 Acknowledgments
 
 - **Florence-2**: [onnx-community/Florence-2-base-ft](https://huggingface.co/onnx-community/Florence-2-base-ft)
 - **Transformers.js**: [HuggingFace Transformers.js](https://huggingface.co/docs/transformers.js) for browser-based ML

@@ -442,7 +442,7 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="font-bold text-lg text-slate-100 leading-tight">
-                PDF Image Extractor
+                PDF to README Generator
               </h1>
               <p className="text-xs text-slate-400">
                 {aiMode === "online" 
