@@ -54,6 +54,7 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<ProcessingStatus>(ProcessingStatus.IDLE);
   const [images, setImages] = useState<ExtractedImage[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBatchNaming, setIsBatchNaming] = useState(false);
   const [pdfText, setPdfText] = useState<string>("");
   const [readme, setReadme] = useState<string>("");
   const [isGeneratingReadme, setIsGeneratingReadme] = useState(false);
@@ -355,6 +356,18 @@ const App: React.FC = () => {
       console.error(e);
       alert("Failed to build images ZIP.");
     }
+  };
+
+  const handleBatchRename = async () => {
+    const targetImages = selectedIds.size > 0 
+      ? images.filter((img) => selectedIds.has(img.id))
+      : images;
+
+    if (targetImages.length === 0) return;
+    setIsBatchNaming(true);
+    setError(null);
+    await processImageNaming(targetImages);
+    setIsBatchNaming(false);
   };
 
   const handleGenerateReadme = async () => {
@@ -762,7 +775,27 @@ const App: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Batch AI Naming Button */}
+                    <button
+                      onClick={handleBatchRename}
+                      disabled={isBatchNaming}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/25 transition-all active:scale-95 disabled:opacity-50"
+                      title={selectedIds.size > 0 ? "Batch name selected images using AI" : "Batch name all images using AI"}
+                    >
+                      {isBatchNaming ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          <span>Naming in Batch...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={14} className="text-amber-300" />
+                          <span>{selectedIds.size > 0 ? `Auto-Name Selected (${selectedIds.size})` : `Auto-Name All (${images.length})`}</span>
+                        </>
+                      )}
+                    </button>
+
                     {selectedIds.size > 0 ? (
                       <>
                         <button
@@ -783,7 +816,7 @@ const App: React.FC = () => {
                         onClick={bulkDownloadImages}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium border border-slate-700/60 transition-colors"
                       >
-                        <FileDown size={14} /> Download All Images (.zip)
+                        <FileDown size={14} /> Download All (.zip)
                       </button>
                     )}
                   </div>
