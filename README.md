@@ -87,9 +87,9 @@ Turn PDF documents, technical papers, and project specs into production-ready Gi
 
 ## 📄 License
 
-This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](LICENSE) license.
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
 
-**Non-Commercial Use Only**: This means you are free to share and adapt the material, but you may not use the material for commercial purposes. Any adaptations must be shared under the same license.
+> **Strictly Non-Commercial Use Only**: You may freely use, modify, and distribute this software for personal, educational, research, and non-profit purposes. **Commercial use, SaaS monetization, and fee-based reselling are strictly prohibited.**
 
 ## 🤝 Acknowledgments
 
