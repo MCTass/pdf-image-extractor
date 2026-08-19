@@ -3,7 +3,7 @@ import { AutoTokenizer, AutoModelForCausalLM, env, TextStreamer } from "@hugging
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX";
+const MODEL_ID = "Xenova/Qwen1.5-0.5B-Chat";
 
 export type QwenProgress = {
   status: "idle" | "loading" | "ready" | "error" | "generating";
@@ -39,16 +39,12 @@ class QwenService {
     if (this.initPromise) return this.initPromise;
     this.initPromise = (async () => {
       try {
-        this.notify({ status: "loading", progress: 0, message: "Initializing Qwen3.5-0.8B..." });
+        // Force WASM (CPU) — Qwen shares GPU with vision model causing device-lost errors
+        this.notify({ status: "loading", progress: 0, message: "Initializing Qwen1.5-0.5B (CPU)..." });
 
-        let device = "wasm";
-        if ("gpu" in navigator) {
-          try {
-            const adapter = await (navigator as any).gpu.requestAdapter();
-            if (adapter) device = "webgpu";
-          } catch (_) {}
-        }
-
+        console.log("[QwenService] Initializing Qwen1.5-0.5B on WASM/CPU (dtype: q8)...");
+        
+        console.log("[QwenService] Loading tokenizer...");
         this.tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, {
           progress_callback: (p: any) => {
             if (p.status === "progress") {
@@ -57,9 +53,10 @@ class QwenService {
           },
         });
 
+        console.log("[QwenService] Loading model into memory (this may take 10-20 seconds)...");
         this.model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
-          device: device as any,
-          dtype: "q4",
+          device: "wasm",
+          dtype: "q8",
           progress_callback: (p: any) => {
             if (p.status === "progress") {
               this.notify({ status: "loading", progress: Math.round(p.progress), message: `Model weights: ${Math.round(p.progress)}%` });
@@ -67,8 +64,8 @@ class QwenService {
           },
         });
 
-        this.notify({ status: "ready", progress: 100, message: `Ready (${device})` });
-        console.log(`[QwenService] Qwen3.5-0.8B loaded on ${device}`);
+        this.notify({ status: "ready", progress: 100, message: "Ready (CPU)" });
+        console.log("[QwenService] Qwen1.5-0.5B loaded on WASM/CPU");
       } catch (err) {
         console.error("[QwenService] Failed to load model:", err);
         this.notify({ status: "error", message: err instanceof Error ? err.message : "Load failed" });
@@ -108,17 +105,17 @@ class QwenService {
 - Additional context: ${context || "None"}
 - The user has extracted images now located in images/ folder: ${imageFilenames.join(", ")}.
 - Insert images using Markdown: ![description](images/filename.png) where relevant.
-- Return raw Markdown only.`;
+- Return RAW MARKDOWN ONLY. Do not use <thought> tags. Do not explain your reasoning. Do not add intro/outro text. Start directly with the # title.`;
 
     const messages = [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Here is the PDF content:\n\n${truncated}\n\nGenerate the README.md now.` },
+      { role: "user", content: `Here is the PDF content:\n\n${truncated}\n\nGenerate the README.md now. Start directly with the content.` },
     ];
 
     const text = (this.tokenizer as any).apply_chat_template(messages, {
       tokenize: false,
       add_generation_prompt: true,
-      enable_thinking: false,
+      enable_thinking: false, // Force model to skip the native reasoning/thinking state
     });
     const inputs = (this.tokenizer as any)(text, { return_tensors: "pt" });
 
@@ -140,6 +137,7 @@ class QwenService {
       max_new_tokens: 2048,
       do_sample: false,
       streamer,
+      repetition_penalty: 1.1,
     });
 
     this.notify({ status: "ready", progress: 100, message: "Ready" });

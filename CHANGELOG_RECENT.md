@@ -8,7 +8,8 @@ This log summarizes the major technical upgrades and user experience improvement
 *   **Architectural Refactor:** The local vision service now supports multiple model architectures (Florence-2 and SmolVLM).
 *   **Model Options:**
     *   **Florence-2-base-ft:** High-speed specialist for OCR and structured naming.
-    *   **SmolVLM-256M/500M:** Advanced Instruct models for nuanced visual understanding and detailed scene description.
+    *   **Granite-Docling-258M:** Highly efficient IBM/Docling vision model for document analysis and scene description (Replaced SmolVLM-256M).
+    *   **SmolVLM-500M:** Advanced Instruct model for nuanced visual understanding.
 *   **Hardware Acceleration:** Full WebGPU support with automatic `fp16` vs `fp32` feature detection and WASM fallback.
 
 ### 2. Offline Document Intelligence (Qwen3.5)

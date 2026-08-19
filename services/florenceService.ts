@@ -10,10 +10,10 @@ import {
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-export type OfflineModelType = "florence-2" | "smolvlm" | "smolvlm-500" | "gemma-4-e2b";
+export type OfflineModelType = "florence-2" | "granite" | "smolvlm-500" | "gemma-4-e2b";
 
 export type ModelProgress = {
-  status: "loading" | "ready" | "error";
+  status: "idle" | "loading" | "ready" | "error";
   progress?: number;
   message?: string;
   modelId?: string;
@@ -22,20 +22,20 @@ export type ModelProgress = {
 class OfflineAIService {
   private model: any = null;
   private processor: any = null;
-  private modelStatus: ModelProgress = { status: "loading", progress: 0 };
+  private modelStatus: ModelProgress = { status: "idle", progress: 0 };
   private statusListeners: Array<(status: ModelProgress) => void> = [];
   private initializationPromise: Promise<void> | null = null;
 
   private currentModelType: OfflineModelType = "florence-2";
   private readonly MODELS = {
     "florence-2": "onnx-community/Florence-2-base-ft",
-    "smolvlm": "HuggingFaceTB/SmolVLM-256M-Instruct",
+    "granite": "onnx-community/granite-docling-258M-ONNX",
     "smolvlm-500": "HuggingFaceTB/SmolVLM-500M-Instruct",
   };
 
   constructor() {
-    // Initial load with default model
-    this.initializeModel();
+    // Initial load with default model - disabled to prevent auto-download
+    // this.initializeModel();
   }
 
   /**
@@ -79,7 +79,7 @@ class OfflineAIService {
     if (this.initializationPromise) return this.initializationPromise;
 
     const modelId = this.MODELS[this.currentModelType];
-    const modelNameDisplay = this.currentModelType === "florence-2" ? "Florence-2" : (this.currentModelType === "smolvlm-500" ? "SmolVLM-500M" : "SmolVLM-256M");
+    const modelNameDisplay = this.currentModelType === "florence-2" ? "Florence-2" : (this.currentModelType === "smolvlm-500" ? "SmolVLM-500M" : "Granite Docling");
 
     this.initializationPromise = (async () => {
       try {
@@ -107,7 +107,9 @@ class OfflineAIService {
 
         console.log(`[OfflineAIService] Model: ${modelId}, Device: ${device}, fp16: ${supportsFp16}`);
 
-        // Load processor
+        console.log(`[OfflineAIService] Initializing ${modelId} on ${device} (dtype: ${supportsFp16 ? "fp16" : "fp32"})...`);
+        
+        console.log("[OfflineAIService] Loading processor...");
         this.processor = (await AutoProcessor.from_pretrained(modelId, {
           progress_callback: (p: any) => {
             if (p.status === "progress") {
@@ -122,6 +124,7 @@ class OfflineAIService {
           },
         })) as AutoProcessor;
 
+        console.log("[OfflineAIService] Loading model weights into VRAM...");
         // Load model based on type
         const modelOptions: any = {
           device: device as any,
@@ -208,9 +211,9 @@ class OfflineAIService {
         const generated_text = this.processor.batch_decode(generated_ids, { skip_special_tokens: false })[0];
         
         // Use regex to robustly find the start of the assistant's response, ignoring special tokens
-        const match = generated_text.match(/<\|im_start\|>assistant|<end_of_utterance>| assistant\s*\n/i);
+        const match = generated_text.match(/<\|assistant\|>|<\|im_start\|>assistant|<end_of_utterance>| assistant\s*\n/i);
         if (match && match.index !== undefined) {
-          caption = generated_text.slice(match.index + match[0].length).replace(/<\|endoftext\|>|<\|im_end\|>|<end_of_utterance>/g, "").trim();
+          caption = generated_text.slice(match.index + match[0].length).replace(/<\|endoftext\|>|<\|im_end\|>|<\|assistant\|>|<end_of_utterance>/g, "").trim();
         } else {
           // Fallback if special tokens are missing
           caption = generated_text.split(/assistant/i)?.pop()?.trim() || generated_text;
